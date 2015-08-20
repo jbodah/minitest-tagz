@@ -4,7 +4,7 @@ module Minitest
   module Tagz
     class << self
       def choose_tags(*tags)
-        @chosen_tags = tags.compact
+        @chosen_tags = tags.map(&:to_sym).compact
       end
 
       def has_matching_tags?(tags)

@@ -1,8 +1,6 @@
 # Minitest::Tagz
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/minitest/tagz`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+yet another tags implementation for Minitest
 
 ## Installation
 
@@ -22,7 +20,33 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+```rb
+# spec_helper.rb
+require 'minitest/tagz'
+
+Minitest::Tagz.patch_minitest
+Minitest::Tagz.choose_tags(*ENV['TAGS'].split(',')) if ENV['TAGS']
+
+# my_spec.rb
+class MySpec < Minitest::Spec
+  tag :fast, :unit
+  it 'should run' do
+    assert true
+  end
+
+  tag :fast
+  it 'should not run' do
+    refute true
+  end
+
+  it 'also should not run' do
+    refute true
+  end
+end
+
+# command line
+bundle exec rake test TAGS=fast,unit
+```
 
 ## Development
 
