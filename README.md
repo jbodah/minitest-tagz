@@ -1,5 +1,9 @@
 # Minitest::Tagz
 
+[![Build Status](https://travis-ci.org/backupify/minitest-tagz.svg)](https://travis-ci.org/backupify/minitest-tagz)
+[![Code Climate](https://codeclimate.com/github/backupify/minitest-tagz/badges/gpa.svg)](https://codeclimate.com/github/backupify/minitest-tagz)
+[![Gem Version](https://badge.fury.io/rb/minitest-tagz.svg)](http://badge.fury.io/rb/minitest-tagz)
+
 yet another tags implementation for Minitest
 
 ## Installation
