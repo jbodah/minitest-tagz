@@ -28,7 +28,6 @@ Or install it yourself as:
 # spec_helper.rb
 require 'minitest/tagz'
 
-Minitest::Tagz.patch_minitest
 Minitest::Tagz.choose_tags(*ENV['TAGS'].split(',')) if ENV['TAGS']
 
 # my_spec.rb

@@ -1,49 +1,47 @@
-require "minitest/tagz/version"
+require 'minitest/tagz/version'
+require 'minitest/tagz/minitest_adapter'
 
 module Minitest
   module Tagz
     class << self
+      # Pick the tags you want to test
       def choose_tags(*tags)
-        @chosen_tags = tags.map(&:to_sym).compact
+        @chosen_tags = tags.map(&:to_sym).compact.to_set
       end
 
-      def has_matching_tags?(tags)
-        tags ||= []
-        chosen_tags.all? { |tag| tags.include?(tag) }
+      # Create a tag on a test
+      def declare_tags(*pending_tags)
+        @pending_tags = pending_tags
+      end
+
+      # Record the given tags with the object
+      def apply_tags(obj)
+        if @pending_tags
+          tags[obj.to_s] = @pending_tags
+          @pending_tags = nil
+        end
+      end
+
+      # Select all the testables with matching tags
+      def filter(enum)
+        enum.select {|obj| has_matching_tags?(obj)}
+      end
+
+      private
+
+      # Check if object has matching tags
+      def has_matching_tags?(obj)
+        obj_tags = tags[obj.to_s] || []
+        chosen_tags.all? { |tag| obj_tags.include?(tag) }
       end
 
       def chosen_tags
-        @chosen_tags ||= []
-      end
-    end
-
-    module MinitestAdapter
-      def tag(*pending_tags)
-        @pending_tags ||= pending_tags
-      end
-
-      def method_added(name)
-        return unless name[/^test_/]
-        tags[name.to_s] = @pending_tags
-        @pending_tags = nil
+        @chosen_tags ||= Set.new
       end
 
       def tags
         @tags ||= {}
       end
-
-      def runnable_methods
-        runnables = super
-        runnables.select do |runnable|
-          Minitest::Tagz.has_matching_tags?(tags[runnable])
-        end
-      end
     end
-
-    def self.patch_minitest
-      ::Minitest::Test.singleton_class.prepend(MinitestAdapter)
-    end
-
-    patch_minitest
   end
 end
