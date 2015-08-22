@@ -15,23 +15,42 @@ module Minitest
       end
 
       # Record the given tags with the object
-      def apply_tags(obj)
+      def apply_tags(namespace, obj)
         if @pending_tags
-          tags[obj.to_s] = @pending_tags
+          # TODO
+          tags["#{namespace}::#{obj}"] += @pending_tags
           @pending_tags = nil
         end
       end
 
+      def record_blanket_tags
+        if @pending_tags
+          # TODO
+          self.blanket_tags = @pending_tags
+          @pending_tags = nil
+        end
+      end
+
+      def apply_blanket_tags(namespace, obj)
+        unless blanket_tags.empty?
+          tags["#{namespace}::#{obj}"] += @blanket_tags
+        end
+      end
+
       # Select all the testables with matching tags
-      def filter(enum)
-        enum.select {|obj| has_matching_tags?(obj)}
+      def filter(namespace, enum)
+        enum.select {|obj| has_matching_tags?(namespace, obj)}
+      end
+
+      def reset_blanket_tags
+        @blanket_tags = []
       end
 
       private
 
       # Check if object has matching tags
-      def has_matching_tags?(obj)
-        obj_tags = tags[obj.to_s] || []
+      def has_matching_tags?(namespace, obj)
+        obj_tags = tags["#{namespace}::#{obj}"] || []
         chosen_tags.all? { |tag| obj_tags.include?(tag) }
       end
 
@@ -40,7 +59,15 @@ module Minitest
       end
 
       def tags
-        @tags ||= {}
+        @tags ||= Hash.new([])
+      end
+
+      def blanket_tags
+        @blanket_tags ||= reset_blanket_tags
+      end
+
+      def blanket_tags=(arg)
+        @blanket_tags = arg
       end
     end
   end

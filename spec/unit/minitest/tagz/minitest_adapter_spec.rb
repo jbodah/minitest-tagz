@@ -47,6 +47,12 @@ module Minitest
       end
     end
 
+    class MinitestSpecExampleWithSameNameButWithoutTags < Minitest::Spec
+      it 'tests things with the :login tag' do
+        true
+      end
+    end
+
     class MinitestAdapterSpec < Minitest::Spec
       after do
         Tagz.choose_tags
@@ -95,25 +101,44 @@ module Minitest
         end
       end
 
-      #describe 'describe blocks' do
-        #describe 'with a tag specified' do
-          #it 'runs top level tests in the describe block' do
-            #assert MinitestSpecExampleWithDescribe.runnable_methods.include?()
-          #end
+      describe 'a suite with similarly named tests' do
+        before do
+          Tagz.choose_tags(:login)
+        end
 
-          #it 'runs tests of nested describe blocks' do
-            #fail
-          #end
+        it "does not run tests with similar names that aren't tagged" do
+          refute MinitestSpecExampleWithSameNameButWithoutTags.runnable_methods.include?('test_0001_tests things with the :login tag')
+        end
+      end
 
-          #it 'does not run top level tests without that tag' do
-            #fail
-          #end
+      describe 'describe blocks' do
+        describe 'with a tag specified' do
+          before do
+            Tagz.choose_tags(:feature)
+          end
 
-          #it 'does not run tests of other describe blocks without that tag' do
-            #fail
-          #end
-        #end
-      #end
+          it 'runs top level tests in the describe block' do
+            describe_block = MinitestSpecExampleWithDescribe.children.find {|c| c.name == 'a tagged describe'}
+            assert describe_block.runnable_methods.include?('test_0001_tests the first thing inside')
+            assert describe_block.runnable_methods.include?('test_0002_tests the second thing inside')
+          end
+
+          it 'runs tests of nested describe blocks' do
+            describe_block = MinitestSpecExampleWithDescribe.children.find {|c| c.name == 'a tagged describe'}
+            nested_describe_block = describe_block.children.find {|c| c.name == 'a tagged describe::a nested describe'}
+            assert nested_describe_block.runnable_methods.include?('test_0001_tests things inside')
+          end
+
+          it 'does not run top level tests without that tag' do
+            refute MinitestSpecExampleWithDescribe.runnable_methods.include?('test_0001_tests something outside a describe block')
+          end
+
+          it 'does not run tests of other describe blocks without that tag' do
+            describe_block = MinitestSpecExampleWithDescribe.children.find {|c| c.name == 'an untagged describe'}
+            refute describe_block.runnable_methods.include?('test_0001_tests the first thing inside')
+          end
+        end
+      end
     end
   end
 end
