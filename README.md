@@ -33,8 +33,11 @@ require 'minitest/tagz'
 Minitest::Tagz.choose_tags(*ENV['TAGS'].split(',')) if ENV['TAGS']
 ```
 
-This wil let you do this like: `bundle exec rake test TAGS=fast,login` to run all
-tests with the fast and login tags.
+Then, for example, you can run all tests with the `:fast` and `:login` tags:
+
+```rb
+bundle exec rake test TAGS=fast,login
+```
 
 ## Usage
 
