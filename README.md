@@ -22,15 +22,27 @@ Or install it yourself as:
 
     $ gem install minitest-tagz
 
-## Usage
+## Setup
+
+In your `test_helper.rb` you'll need to require `Minitest::Tagz`. You'll also
+want to tell `Tagz` which tags you want to use. I suggest using the `TAGS` environment
+variable:
 
 ```rb
-# spec_helper.rb
 require 'minitest/tagz'
-
 Minitest::Tagz.choose_tags(*ENV['TAGS'].split(',')) if ENV['TAGS']
+```
 
-# my_spec.rb
+This wil let you do this like: `bundle exec rake test TAGS=fast,login` to run all
+tests with the fast and login tags.
+
+## Usage
+
+`Minitest::Tagz` works with both `Minitest::Test` and `Minitest::Spec`. You can declare
+tags by using the `tag` helper.
+
+```rb
+# Using Minitest::Spec
 class MySpec < Minitest::Spec
   tag :fast, :unit
   it 'should run' do
@@ -47,8 +59,31 @@ class MySpec < Minitest::Spec
   end
 end
 
-# command line
-bundle exec rake test TAGS=fast,unit
+# Using Minitest::Test
+class MyTest < Minitest::Test
+  tag :fast
+  def test_my_stuff
+    assert true
+  end
+end
+```
+
+With `Minitest::Spec` adding tags to a `describe` will add the tags to all of the
+tests in the block:
+
+```rb
+class MySpec < Minitest::Spec
+  tag :login
+  describe 'all tests in this are tagged with :login' do
+    it 'tests this' do
+      assert true
+    end
+
+    it 'also tests this' do
+      assert true
+    end
+  end
+end
 ```
 
 ## Development
