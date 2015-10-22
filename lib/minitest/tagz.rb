@@ -15,11 +15,21 @@ module Minitest
       end
 
       # Record the given tags with the object
-      def apply_tags(namespace, obj)
-        if @pending_tags
+      def apply_tags(namespace, obj, pending_tags = nil)
+        if pending_tags
+          tags["#{namespace}::#{obj}"] += pending_tags
+        elsif @pending_tags
           # TODO
           tags["#{namespace}::#{obj}"] += @pending_tags
           @pending_tags = nil
+        end
+      end
+
+      def dump_tags
+        if @pending_tags
+          duped = @pending_tags.dup
+          @pending_tags = nil
+          duped
         end
       end
 
@@ -46,20 +56,20 @@ module Minitest
         @blanket_tags = []
       end
 
-      private
-
-      # Check if object has matching tags
-      def has_matching_tags?(namespace, obj)
-        obj_tags = tags["#{namespace}::#{obj}"] || []
-        chosen_tags.all? { |tag| obj_tags.include?(tag) }
-      end
-
       def chosen_tags
         @chosen_tags ||= Set.new
       end
 
       def tags
         @tags ||= Hash.new([])
+      end
+
+      private
+
+      # Check if object has matching tags
+      def has_matching_tags?(namespace, obj)
+        obj_tags = tags["#{namespace}::#{obj}"] || []
+        chosen_tags.all? { |tag| obj_tags.include?(tag) }
       end
 
       def blanket_tags

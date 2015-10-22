@@ -202,5 +202,52 @@ module Minitest
         end
       end
     end
+
+    class ShouldaContextSpec < Minitest::Spec
+      include ShouldaContextLoadable
+
+      context 'tags on should blocks' do
+        should 'not tag this test' do
+          refute Tagz.tags.include?(self.class.name + '::' + name)
+        end
+
+        tag :shoulda_tag
+        should 'tag this test' do
+          assert Tagz.tags.include?(self.class.name + '::' + name)
+        end
+
+        should 'not tag this test either' do
+          refute Tagz.tags.include?(self.class.name + '::' + name)
+        end
+      end
+
+      tag :context_tag
+      context 'tags on context blocks' do
+        should 'tag this test' do
+          skip
+          assert Tagz.tags.include?(self.class.name + '::' + name)
+        end
+
+        should 'also tag this test' do
+          skip
+          assert Tagz.tags.include?(self.class.name + '::' + name)
+        end
+      end
+
+      tag :nested_context_tag
+      context 'tags on nested context blocks' do
+        context 'a nested context block' do
+          should 'tag this test' do
+            skip
+            assert Tagz.tags.include?(self.class.name + '::' + name)
+          end
+
+          should 'also tag this test' do
+            skip
+            assert Tagz.tags.include?(self.class.name + '::' + name)
+          end
+        end
+      end
+    end
   end
 end

@@ -6,13 +6,14 @@ module Minitest
           Tagz.declare_tags(*tags)
         end
 
+        def runnable_methods
+          Tagz.filter(self, super)
+        end
+
         def method_added(name)
           return unless name[/^test_/]
           Tagz.apply_tags(self, name)
-        end
-
-        def runnable_methods
-          Tagz.filter(self, super)
+          super
         end
       end
 
@@ -44,4 +45,25 @@ if defined?(Minitest)
   if defined?(Minitest::Spec)
     ::Minitest::Spec.singleton_class.prepend(Minitest::Tagz::MinitestAdapter::Spec)
   end
+end
+
+if defined?(ShouldaContextLoadable)
+  module Minitest
+    module Tagz
+      module ShouldaAdapter
+        def should(name, opts = {}, &block)
+          tags = Tagz.dump_tags
+          super name, opts, &block
+          self.shoulds.last[:tagz] = tags if tags
+        end
+
+        def create_test_from_should_hash(should)
+          test_name = super.to_s
+          Tagz.apply_tags(self.parent, test_name, should[:tagz])
+        end
+      end
+    end
+  end
+
+  Shoulda::Context::Context.prepend(Minitest::Tagz::ShouldaAdapter)
 end
