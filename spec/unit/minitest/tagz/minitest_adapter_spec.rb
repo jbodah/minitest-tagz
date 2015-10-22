@@ -219,6 +219,13 @@ module Minitest
         should 'not tag this test either' do
           refute Tagz.tags.include?(self.class.name + '::' + name)
         end
+
+        context 'tags on nested should blocks' do
+          tag :another_should_tag
+          should 'tag this test' do
+            assert Tagz.tags.include?(self.class.name + '::' + name)
+          end
+        end
       end
 
       tag :context_tag
