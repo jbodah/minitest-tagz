@@ -58,10 +58,16 @@ if defined?(ShouldaContextLoadable)
         end
 
         def create_test_from_should_hash(should)
-          test_name = super.to_s
-          minitest_parent = self.parent
-          minitest_parent = minitest_parent.parent while minitest_parent.respond_to?(:parent)
-          Tagz.apply_tags(minitest_parent, test_name, should[:tagz])
+          if should[:tagz]
+            test_name = super.to_s
+            minitest_parent = self.parent
+            until minitest_parent.is_a?(Class)
+              minitest_parent = minitest_parent.parent
+            end
+            Tagz.apply_tags(minitest_parent, test_name, should[:tagz])
+          else
+            super
+          end
         end
       end
     end
