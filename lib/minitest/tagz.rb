@@ -46,7 +46,6 @@ module Minitest
     class TaggerFactory
       def self.create_tagger(owner, pending_tags)
         patchers = [MinitestPatcher]
-        patchers << ShouldaPatcher if owner.ancestors.include?(ShouldaContextLoadable)
         Tagger.new(patchers, owner, pending_tags)
       end
     end
@@ -92,76 +91,6 @@ module Minitest
         res = yield
         finished_applying_tags if is_initial
         res
-      end
-    end
-
-    module ShouldaPatcher
-      if defined?(::Shoulda::Context::Context)
-        ::Shoulda::Context::Context.include(Tagz::BaseMixin)
-      end
-
-      # yuck
-      old_create_test_from_should_hash = Shoulda::Context::Context.instance_method(:create_test_from_should_hash)
-      Shoulda::Context::Context.class_eval do
-        define_method(:create_test_from_should_hash) do |shd|
-          if shd[:tagz]
-            test_name = old_create_test_from_should_hash.bind(self).call(shd).to_s
-            minitest_parent = self.parent
-            until minitest_parent.is_a?(Class)
-              minitest_parent = minitest_parent.parent
-            end
-            Tagz::RunnerStrategy.tag_map[Tagz::RunnerStrategy.serialize(minitest_parent, test_name)] = shd[:tagz]
-          else
-            old_create_test_from_should_hash.bind(self).call(shd)
-          end
-        end
-      end
-
-      class << self
-        def patch(state_machine)
-          patch_context(state_machine)
-          patch_should(state_machine)
-        end
-
-        def unpatch
-          unpatch_context
-          unpatch_should
-        end
-
-        private
-
-        def patch_should(state_machine)
-          @old_should = old_should = Shoulda::Context::Context.instance_method(:should)
-          Shoulda::Context::Context.class_eval do
-            define_method(:should) do |*args, &block|
-              state_machine.handle_initial_test_definition do
-                old_should.bind(self).call(*args, &block)
-                self.shoulds.last[:tagz] = state_machine.pending_tags if state_machine.pending_tags
-              end
-            end
-          end
-        end
-
-        def patch_context(state_machine)
-          @old_context = old_context = Shoulda::Context::ClassMethods.instance_method(:context)
-          Shoulda::Context::ClassMethods.class_eval do
-            define_method(:context) do |name, *args, &block|
-              state_machine.handle_initial_test_definition do
-                old_context.bind(self).call(name, *args, &block)
-              end
-            end
-          end
-        end
-
-        def unpatch_should
-          old_should = @old_should
-          Shoulda::Context::Context.class_eval { define_method(:should, old_should) }
-        end
-
-        def unpatch_context
-          old_context = @old_context
-          Shoulda::Context::ClassMethods.class_eval { define_method(:context, old_context) }
-        end
       end
     end
 

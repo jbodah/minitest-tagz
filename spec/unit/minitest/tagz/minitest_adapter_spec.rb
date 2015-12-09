@@ -226,59 +226,5 @@ module Minitest
         end
       end
     end
-
-    class ShouldaContextSpec < Minitest::Spec
-      include ShouldaContextLoadable
-
-      before do
-        @serialized = Minitest::Tagz::RunnerStrategy.serialize(ShouldaContextSpec, name)
-      end
-
-      context 'tags on should blocks' do
-        should 'not tag this test' do
-          assert_equal nil, Minitest::Tagz::RunnerStrategy.tag_map[@serialized]
-        end
-
-        tag :shoulda_tag
-        should 'tag this test' do
-          assert_equal [:shoulda_tag], Minitest::Tagz::RunnerStrategy.tag_map[@serialized]
-        end
-
-        should 'not tag this test either' do
-          assert_equal nil, Minitest::Tagz::RunnerStrategy.tag_map[@serialized]
-        end
-
-        context 'tags on nested should blocks' do
-          tag :another_should_tag
-          should 'tag this test' do
-            assert_equal [:another_should_tag], Minitest::Tagz::RunnerStrategy.tag_map[@serialized]
-          end
-        end
-      end
-
-      tag :context_tag
-      context 'tags on context blocks' do
-        should 'tag this test' do
-          assert_equal [:context_tag], Minitest::Tagz::RunnerStrategy.tag_map[@serialized]
-        end
-
-        should 'also tag this test' do
-          assert_equal [:context_tag], Minitest::Tagz::RunnerStrategy.tag_map[@serialized]
-        end
-      end
-
-      tag :nested_context_tag
-      context 'tags on nested context blocks' do
-        context 'a nested context block' do
-          should 'tag this test' do
-            assert_equal [:nested_context_tag], Minitest::Tagz::RunnerStrategy.tag_map[@serialized]
-          end
-
-          should 'also tag this test' do
-            assert_equal [:nested_context_tag], Minitest::Tagz::RunnerStrategy.tag_map[@serialized]
-          end
-        end
-      end
-    end
   end
 end
