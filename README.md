@@ -89,6 +89,20 @@ class MySpec < Minitest::Spec
 end
 ```
 
+## Debugging
+
+You can save a reference to the tagger and watch the internal state machine:
+
+```rb
+tagger = tag :focus
+it 'should work' do
+  require 'rubygems'; require 'pry'; binding.pry
+end
+
+pry(main)> tagger
+#=> #<Minitest::Tagz::Tagger:0x007fa296102008 @owner=#<Class:0x007fa2957317b8>, @patchers=[Minitest::Tagz::MinitestPatcher], @pending_tags=[:focus], @state="applying_tags">
+```
+
 ## Contributing
 
 1. Fork it ( https://github.com/backupify/minitest-tagz/fork )
