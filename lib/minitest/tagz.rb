@@ -9,23 +9,24 @@ module Minitest
           "#{owner} >> #{test_name}"
         end
 
-        def patch
-          ::Minitest::Test.singleton_class.class_eval do
-            attr_reader :tag_map
-
-            old_runnable_methods = instance_method(:runnable_methods)
-            define_method :runnable_methods do
-              if Tagz.chosen_tags && Tagz.chosen_tags.any?
-                all_runnables = old_runnable_methods.bind(self).call
-                all_runnables.select do |r|
-                  next false unless MinitestRunnerStrategy.tag_map[MinitestRunnerStrategy.serialize(self, r)]
-                  (Tagz.chosen_tags - MinitestRunnerStrategy.tag_map[MinitestRunnerStrategy.serialize(self, r)]).empty?
-                end
-              else
-                old_runnable_methods.bind(self).call
+        module Patch
+          def runnable_methods
+            all_runnables = super
+            if Tagz.chosen_tags && Tagz.chosen_tags.any?
+              all_runnables.select do |r|
+                serialized = MinitestRunnerStrategy.serialize(self, r)
+                tags_on_runnable = MinitestRunnerStrategy.tag_map[serialized] 
+                next false unless tags_on_runnable
+                (Tagz.chosen_tags - tags_on_runnable).empty?
               end
+            else
+              all_runnables
             end
           end
+        end
+
+        def patch
+          ::Minitest::Test.singleton_class.prepend(Patch)
         end
 
         def tag_map
@@ -133,18 +134,21 @@ module Minitest
         end
 
         def patch_minitest_spec(state_machine)
-          @old_describe = old_describe = Minitest::Spec.method(:describe)
-          Minitest::Spec.class_eval do
-            define_singleton_method(:describe) do |*args, &block|
+          @old_describe = old_describe = Kernel.instance_method(:describe)
+          Kernel.module_eval do
+            define_method(:describe) do |*args, &block|
               state_machine.handle_initial_test_definition do
-                old_describe.unbind.bind(self).call(*args, &block)
+                old_describe.bind(self).call(*args, &block)
               end
             end
           end
         end
 
         def unpatch_minitest_spec
-          Minitest::Spec.define_singleton_method(:describe, @old_describe)
+          old_describe = @old_describe
+          Kernel.module_eval do
+            define_method(:describe, old_describe)
+          end
         end
       end
     end
@@ -156,7 +160,7 @@ module Minitest
       # want to run tests with tags in this set
       # @param [Enumerable<Symbol>] tags - a list of tags you want to test
       def choose_tags(*tags)
-        @chosen_tags = tags
+        @chosen_tags = tags.map(&:to_sym)
       end
 
       def declare_tag_assignment(owner, pending_tags)
