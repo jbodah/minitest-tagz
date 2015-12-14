@@ -3,13 +3,14 @@ require 'state_machine'
 
 module Minitest
   module Tagz
+    # The strategy for patching the Minitest run time
     module MinitestRunnerStrategy
       class << self
         def serialize(owner, test_name)
           "#{owner} >> #{test_name}"
         end
 
-        module Patch
+        module RunnableMethodsFilter
           def runnable_methods
             all_runnables = super
             if Tagz.chosen_tags && Tagz.chosen_tags.any?
@@ -25,8 +26,31 @@ module Minitest
           end
         end
 
+        module RunPatch
+          def run(*args)
+            # Check for no match and don't filter runnable methods if there would be no match
+            if Tagz.run_all_if_no_match?
+              run_map = Runnable.runnables.reduce({}) {|memo, r| memo[r] = r.runnable_methods; memo}
+              should_skip_filter = run_map.all? do |ctxt, methods| 
+                methods.all? do |m|
+                  serialized = MinitestRunnerStrategy.serialize(ctxt, m)
+                  tags = MinitestRunnerStrategy.tag_map[serialized]
+                  tags.nil? || tags.empty?
+                end
+              end
+              if should_skip_filter
+                puts "Couldn't find any runnables with the given tag, running all runnables"
+                return super 
+              end
+            end
+
+            ::Minitest::Test.singleton_class.prepend(RunnableMethodsFilter)
+            super
+          end
+        end
+
         def patch
-          ::Minitest::Test.singleton_class.prepend(Patch)
+          ::Minitest.singleton_class.prepend(RunPatch)
         end
 
         def tag_map
@@ -35,15 +59,22 @@ module Minitest
       end
     end
 
+    # Patch the Minitest runtime to hook into Tagz
     MinitestRunnerStrategy.patch
+
+    # Alias
     RunnerStrategy = MinitestRunnerStrategy
 
+    # Was more useful when I was trying to add
+    # shoulda-context support
     module BaseMixin
       def tag(*tags)
         Tagz.declare_tag_assignment(self, tags)
       end
     end
 
+    # Was more useful when I was trying to add
+    # shoulda-context support
     class TaggerFactory
       def self.create_tagger(owner, pending_tags)
         patchers = [MinitestPatcher]
@@ -51,6 +82,9 @@ module Minitest
       end
     end
 
+    # Represents the individual instance of a `tag` call
+    # It is essentially a state machine that works with the
+    # patcher to patch and unpatch Minitest properly
     class Tagger
       state_machine :state, initial: :awaiting_tag_declaration do
         after_transition any => :awaiting_test_definition, do: :patch_test_definitions
@@ -95,6 +129,7 @@ module Minitest
       end
     end
 
+    # Patches Minitest to track tags
     module MinitestPatcher
       ::Minitest::Test.extend(Tagz::BaseMixin)
 
@@ -153,14 +188,19 @@ module Minitest
       end
     end
 
+    # Main extensions to Minitest
     class << self
-      attr_accessor :chosen_tags
+      attr_accessor :chosen_tags, :run_all_if_no_match
+
+      alias :run_all_if_no_match? :run_all_if_no_match
 
       # Create a master TagSet that you wish to test. You only
       # want to run tests with tags in this set
       # @param [Enumerable<Symbol>] tags - a list of tags you want to test
-      def choose_tags(*tags)
+      # @param [Boolean] run_all_if_no_match - will run all tests if no tests are found with the tag
+      def choose_tags(*tags, run_all_if_no_match: false)
         @chosen_tags = tags.map(&:to_sym)
+        @run_all_if_no_match = run_all_if_no_match
       end
 
       def declare_tag_assignment(owner, pending_tags)
