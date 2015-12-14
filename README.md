@@ -89,6 +89,13 @@ class MySpec < Minitest::Spec
 end
 ```
 
+You can also use the `run_all_if_no_match` option to do something like always have a `:focus` tag on-demand:
+
+```rb
+Minitest::Tagz.choose_tags(*ENV['TAGS'].split(','), run_all_if_no_match: true) if ENV['TAGS']
+```
+
+
 ## Debugging
 
 You can save a reference to the tagger and watch the internal state machine:
