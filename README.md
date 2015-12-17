@@ -10,17 +10,9 @@ yet another tags implementation for Minitest
 
 Add this line to your application's Gemfile:
 
-```ruby
+```rb
 gem 'minitest-tagz'
 ```
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install minitest-tagz
 
 ## Setup
 
@@ -37,6 +29,16 @@ Then, for example, you can run all tests with the `:fast` and `:login` tags:
 
 ```rb
 bundle exec rake test TAGS=fast,login
+```
+
+Here's another example which will allow you to drop in a `:focus` tag wherever you want:
+
+```rb
+require 'minitest/tagz'
+tags = ENV['TAGS'].split(',') if ENV['TAGS']
+tags ||= []
+tags << 'focus'
+Minitest::Tagz.choose_tags(*tags, run_all_if_no_match: true)
 ```
 
 ## Usage
