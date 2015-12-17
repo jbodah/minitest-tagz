@@ -39,7 +39,7 @@ module Minitest
                 end
               end
               if should_skip_filter
-                puts "Couldn't find any runnables with the given tag, running all runnables" if Tags.log_if_no_match?
+                puts "Couldn't find any runnables with the given tag, running all runnables" if Tagz.log_if_no_match?
                 return super 
               end
             end
