@@ -39,7 +39,7 @@ module Minitest
                 end
               end
               if should_skip_filter
-                puts "Couldn't find any runnables with the given tag, running all runnables"
+                puts "Couldn't find any runnables with the given tag, running all runnables" if Tags.log_if_no_match?
                 return super 
               end
             end
@@ -190,17 +190,20 @@ module Minitest
 
     # Main extensions to Minitest
     class << self
-      attr_accessor :chosen_tags, :run_all_if_no_match
+      attr_accessor :chosen_tags, :run_all_if_no_match, :log_if_no_match
 
       alias :run_all_if_no_match? :run_all_if_no_match
+      alias :log_if_no_match? :log_if_no_match
 
       # Create a master TagSet that you wish to test. You only
       # want to run tests with tags in this set
       # @param [Enumerable<Symbol>] tags - a list of tags you want to test
       # @param [Boolean] run_all_if_no_match - will run all tests if no tests are found with the tag
-      def choose_tags(*tags, run_all_if_no_match: false)
+      # @param [Boolean] log_if_no_match - puts if no match specs found
+      def choose_tags(*tags, log_if_no_match: false, run_all_if_no_match: false)
         @chosen_tags = tags.map(&:to_sym)
         @run_all_if_no_match = run_all_if_no_match
+        @log_if_no_match = log_if_no_match
       end
 
       def declare_tag_assignment(owner, pending_tags)
