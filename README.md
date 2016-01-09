@@ -6,6 +6,10 @@
 
 yet another tags implementation for Minitest
 
+## Requirements
+
+* Ruby 2.0.0+
+
 ## Installation
 
 Add this line to your application's Gemfile:
