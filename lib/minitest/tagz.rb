@@ -44,13 +44,13 @@ module Minitest
               end
             end
 
-            ::Minitest::Test.singleton_class.prepend(RunnableMethodsFilter)
+            ::Minitest::Test.singleton_class.class_eval { prepend(RunnableMethodsFilter) }
             super
           end
         end
 
         def patch
-          ::Minitest.singleton_class.prepend(RunPatch)
+          ::Minitest.singleton_class.class_eval { prepend(RunPatch) }
         end
 
         def tag_map
