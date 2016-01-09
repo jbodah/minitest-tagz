@@ -97,6 +97,16 @@ You can also use the `run_all_if_no_match` option to do something like always ha
 Minitest::Tagz.choose_tags(*ENV['TAGS'].split(','), run_all_if_no_match: true) if ENV['TAGS']
 ```
 
+This is how we add `tag :focus` in our projects:
+
+```rb
+require 'minitest/tagz'
+
+tags = ENV['TAGS'].split(',') if ENV['TAGS']
+tags ||= []
+tags << 'focus'
+Minitest::Tagz.choose_tags(*tags, run_all_if_no_match: true)
+```
 
 ## Debugging
 
