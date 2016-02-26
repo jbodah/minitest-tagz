@@ -225,6 +225,44 @@ module Minitest
           end
         end
       end
+
+      describe 'excluding tags' do
+        describe 'a single tag' do
+          before do
+            Tagz.choose_tags('-fast')
+          end
+
+          it 'runs tests that have just a login tag' do
+            assert MinitestTestExample.runnable_methods.include?('test_with_login_tag')
+          end
+
+          it 'does not run tests with the fast tag' do
+            refute MinitestTestExample.runnable_methods.include?('test_with_login_and_fast_tags')
+          end
+
+          it 'runs tests without any tag' do
+            assert MinitestTestExample.runnable_methods.include?('test_without_login_tag')
+          end
+        end
+
+        describe 'multiple tags' do
+          before do
+            Tagz.choose_tags(:login, '-fast')
+          end
+
+          it 'runs tests that have just a login tag' do
+            assert MinitestTestExample.runnable_methods.include?('test_with_login_tag')
+          end
+
+          it 'does not run tests with the fast tag' do
+            refute MinitestTestExample.runnable_methods.include?('test_with_login_and_fast_tags')
+          end
+
+          it 'does not run tests without any tag' do
+            refute MinitestTestExample.runnable_methods.include?('test_without_login_tag')
+          end
+        end
+      end
     end
   end
 end

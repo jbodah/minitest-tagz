@@ -35,6 +35,13 @@ Then, for example, you can run all tests with the `:fast` and `:login` tags:
 bundle exec rake test TAGS=fast,login
 ```
 
+You can also run all test without a particular tag or mix any subset.
+Below we run all the `:fast` tags, but not the `:login` tags
+
+```rb
+bundle exec rake test TAGS=-login,fast
+```
+
 Here's another example which will allow you to drop in a `:focus` tag wherever you want:
 
 ```rb

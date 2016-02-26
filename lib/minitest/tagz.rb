@@ -13,16 +13,26 @@ module Minitest
         module RunnableMethodsFilter
           def runnable_methods
             all_runnables = super
-            if Tagz.chosen_tags && Tagz.chosen_tags.any?
-              all_runnables.select do |r|
+
+            if Tagz.positive_tags.any?
+              all_runnables.select! do |r|
                 serialized = MinitestRunnerStrategy.serialize(self, r)
                 tags_on_runnable = MinitestRunnerStrategy.tag_map[serialized]
                 next false unless tags_on_runnable
-                (Tagz.chosen_tags - tags_on_runnable).empty?
+                (Tagz.positive_tags - tags_on_runnable).empty?
               end
-            else
-              all_runnables
             end
+
+            if Tagz.negative_tags.any?
+              all_runnables.reject! do |r|
+                serialized = MinitestRunnerStrategy.serialize(self, r)
+                tags_on_runnable = MinitestRunnerStrategy.tag_map[serialized]
+                next false unless tags_on_runnable
+                (Tagz.negative_tags & tags_on_runnable).any?
+              end
+            end
+
+            all_runnables
           end
         end
 
@@ -108,7 +118,7 @@ module Minitest
       def initialize(patchers, owner, pending_tags)
         @patchers = patchers
         @owner = owner
-        @pending_tags = pending_tags
+        @pending_tags = pending_tags.map(&:to_s)
         super()
       end
 
@@ -201,9 +211,21 @@ module Minitest
       # @param [Boolean] run_all_if_no_match - will run all tests if no tests are found with the tag
       # @param [Boolean] log_if_no_match - puts if no match specs found
       def choose_tags(*tags, log_if_no_match: false, run_all_if_no_match: false)
-        @chosen_tags = tags.map(&:to_sym)
+        @chosen_tags = tags.map(&:to_s)
         @run_all_if_no_match = run_all_if_no_match
         @log_if_no_match = log_if_no_match
+      end
+
+      def chosen_tags
+        @chosen_tags || []
+      end
+
+      def positive_tags
+        chosen_tags.reject {|t| t.is_a?(String) && t[/^-/]}
+      end
+
+      def negative_tags
+        chosen_tags.select {|t| t.is_a?(String) && t[/^-/]}.map {|t| t[1..-1]}
       end
 
       def declare_tag_assignment(owner, pending_tags)
