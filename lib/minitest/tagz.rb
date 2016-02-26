@@ -16,7 +16,7 @@ module Minitest
             if Tagz.chosen_tags && Tagz.chosen_tags.any?
               all_runnables.select do |r|
                 serialized = MinitestRunnerStrategy.serialize(self, r)
-                tags_on_runnable = MinitestRunnerStrategy.tag_map[serialized] 
+                tags_on_runnable = MinitestRunnerStrategy.tag_map[serialized]
                 next false unless tags_on_runnable
                 (Tagz.chosen_tags - tags_on_runnable).empty?
               end
@@ -31,16 +31,16 @@ module Minitest
             # Check for no match and don't filter runnable methods if there would be no match
             if Tagz.run_all_if_no_match?
               run_map = Runnable.runnables.reduce({}) {|memo, r| memo[r] = r.runnable_methods; memo}
-              should_skip_filter = run_map.all? do |ctxt, methods| 
+              should_skip_filter = run_map.all? do |ctxt, methods|
                 methods.all? do |m|
                   serialized = MinitestRunnerStrategy.serialize(ctxt, m)
                   tags = MinitestRunnerStrategy.tag_map[serialized]
-                  tags.nil? || tags.empty?
+                  tags.nil? || tags.empty? || (tags & Tagz.chosen_tags).empty?
                 end
               end
               if should_skip_filter
                 puts "Couldn't find any runnables with the given tag, running all runnables" if Tagz.log_if_no_match?
-                return super 
+                return super
               end
             end
 
