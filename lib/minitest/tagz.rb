@@ -45,7 +45,10 @@ module Minitest
                 methods.all? do |m|
                   serialized = MinitestRunnerStrategy.serialize(ctxt, m)
                   tags = MinitestRunnerStrategy.tag_map[serialized]
-                  tags.nil? || tags.empty? || (tags & Tagz.chosen_tags).empty?
+                  tags.nil? ||
+                    tags.empty? ||
+                    ((tags & Tagz.positive_tags).empty? &&
+                     (tags & Tagz.negative_tags).empty?)
                 end
               end
               if should_skip_filter
