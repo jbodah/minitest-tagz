@@ -114,8 +114,7 @@ This is how we add `tag :focus` in our projects:
 require 'minitest/tagz'
 
 tags = ENV['TAGS'].split(',') if ENV['TAGS']
-tags ||= []
-tags << 'focus'
+tags ||= ['focus']
 Minitest::Tagz.choose_tags(*tags, run_all_if_no_match: true)
 ```
 
