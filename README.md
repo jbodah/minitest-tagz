@@ -111,11 +111,7 @@ Minitest::Tagz.choose_tags(*ENV['TAGS'].split(','), run_all_if_no_match: true) i
 This is how we add `tag :focus` in our projects:
 
 ```rb
-require 'minitest/tagz'
-
-tags = ENV['TAGS'].split(',') if ENV['TAGS']
-tags ||= ['focus']
-Minitest::Tagz.choose_tags(*tags, run_all_if_no_match: true)
+require 'minitest/tagz/focus'
 ```
 
 ## Debugging
