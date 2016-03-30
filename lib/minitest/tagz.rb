@@ -1,6 +1,6 @@
 require 'minitest'
 require 'minitest/tagz/version'
-require 'state_machine'
+require 'state_machines'
 
 module Minitest
   module Tagz
