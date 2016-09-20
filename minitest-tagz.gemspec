@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = %q{yet another tags implementation for Minitest}
   spec.description   = %q{allows you to tag different Minitest tests with tags that can be used to filter tests}
-  spec.homepage      = "https://github.com/backupify/minitest-tagz"
+  spec.homepage      = "https://github.com/jbodah/minitest-tagz"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
