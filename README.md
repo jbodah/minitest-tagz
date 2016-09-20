@@ -6,6 +6,8 @@
 
 yet another tags implementation for Minitest
 
+__Note: [backupify/minitest-tagz](https://github.com/backupify/minitest-tagz) is no longer maintained. Please refer to this fork for the maintenance.__
+
 ## Requirements
 
 * Ruby 2.0.0+
