@@ -150,15 +150,19 @@ module Minitest
       class << self
         def patch(state_machine)
           patch_minitest_test(state_machine)
-          patch_minitest_spec(state_machine)
+          patch_minitest_spec(state_machine) if spec_included?
         end
 
         def unpatch
           unpatch_minitest_test
-          unpatch_minitest_spec
+          unpatch_minitest_spec if spec_included?
         end
 
         private
+
+        def spec_included?
+          !defined?(::Minitest::Spec).nil?
+        end
 
         def patch_minitest_test(state_machine)
           @old_method_added = old_method_added = Minitest::Test.method(:method_added)
