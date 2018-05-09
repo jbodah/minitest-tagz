@@ -1,6 +1,5 @@
 require 'minitest'
 require 'minitest/tagz/version'
-require 'state_machines'
 
 module Minitest
   module Tagz
@@ -100,21 +99,9 @@ module Minitest
     # It is essentially a state machine that works with the
     # patcher to patch and unpatch Minitest properly
     class Tagger
-      state_machine :state, initial: :awaiting_tag_declaration do
-        after_transition any => :awaiting_test_definition, do: :patch_test_definitions
-        after_transition any => :finished, do: :unpatch_test_definitions
-
-        event :tags_declared do
-          transition :awaiting_tag_declaration => :awaiting_test_definition
-        end
-
-        event :initial_test_definition_encountered do
-          transition :awaiting_test_definition => :applying_tags
-        end
-
-        event :finished_applying_tags do
-          transition :applying_tags => :finished
-        end
+      def tags_declared
+        patch_test_definitions
+        @awaiting_initial_test_definition = true
       end
 
       attr_reader :patchers, :owner, :pending_tags
@@ -135,10 +122,10 @@ module Minitest
       end
 
       def handle_initial_test_definition
-        is_initial = awaiting_test_definition?
-        initial_test_definition_encountered if is_initial
+        is_initial = @awaiting_initial_test_definition
+        @awaiting_initial_test_definition = false if is_initial
         res = yield
-        finished_applying_tags if is_initial
+        unpatch_test_definitions if is_initial
         res
       end
     end
@@ -165,42 +152,51 @@ module Minitest
         end
 
         def patch_minitest_test(state_machine)
-          @old_method_added = old_method_added = Minitest::Test.method(:method_added)
           Minitest::Test.class_eval do
-            define_singleton_method(:method_added) do |name|
-              if name[/^test_/]
-                state_machine.handle_initial_test_definition do
-                  Tagz::RunnerStrategy.tag_map ||= {}
-                  Tagz::RunnerStrategy.tag_map[Tagz::RunnerStrategy.serialize(self, name)] ||= []
-                  Tagz::RunnerStrategy.tag_map[Tagz::RunnerStrategy.serialize(self, name)] += state_machine.pending_tags
-                  old_method_added.call(name)
+            self.singleton_class.class_eval do
+              alias :old_method_added :method_added
+
+              define_method(:method_added) do |name|
+                if name[/^test_/]
+                  state_machine.handle_initial_test_definition do
+                    Tagz::RunnerStrategy.tag_map ||= {}
+                    Tagz::RunnerStrategy.tag_map[Tagz::RunnerStrategy.serialize(self, name)] ||= []
+                    Tagz::RunnerStrategy.tag_map[Tagz::RunnerStrategy.serialize(self, name)] += state_machine.pending_tags
+                    old_method_added(name)
+                  end
+                else
+                  old_method_added(name)
                 end
-              else
-                old_method_added.call(name)
               end
             end
           end
         end
 
         def unpatch_minitest_test
-          Minitest::Test.define_singleton_method(:method_added, @old_method_added)
+          Minitest::Test.class_eval do
+            self.singleton_class.class_eval do
+              undef_method :method_added
+              alias :method_added :old_method_added
+            end
+          end
         end
 
         def patch_minitest_spec(state_machine)
-          @old_describe = old_describe = Kernel.instance_method(:describe)
           Kernel.module_eval do
+            alias :old_describe :describe
+
             define_method(:describe) do |*args, &block|
               state_machine.handle_initial_test_definition do
-                old_describe.bind(self).call(*args, &block)
+                old_describe(*args, &block)
               end
             end
           end
         end
 
         def unpatch_minitest_spec
-          old_describe = @old_describe
           Kernel.module_eval do
-            define_method(:describe, old_describe)
+            undef_method :describe
+            alias :describe :old_describe
           end
         end
       end
@@ -225,7 +221,7 @@ module Minitest
       end
 
       def chosen_tags
-        @chosen_tags || []
+        @chosen_tags ||= []
       end
 
       def positive_tags
@@ -239,7 +235,6 @@ module Minitest
       def declare_tag_assignment(owner, pending_tags)
         tag_machine = TaggerFactory.create_tagger(owner, pending_tags)
         tag_machine.tags_declared
-        # TODO add debugging tip about this
         tag_machine
       end
     end

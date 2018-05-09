@@ -20,7 +20,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "minitest", "~> 5"
-  spec.add_dependency 'state_machines'
 
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "rake", "~> 10.0"
