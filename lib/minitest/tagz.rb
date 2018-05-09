@@ -224,10 +224,6 @@ module Minitest
         @log_if_no_match = log_if_no_match
       end
 
-      def chosen_tags
-        @chosen_tags || []
-      end
-
       def positive_tags
         chosen_tags.reject {|t| t.is_a?(String) && t[/^-/]}
       end
