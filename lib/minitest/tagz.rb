@@ -208,7 +208,7 @@ module Minitest
 
     # Main extensions to Minitest
     class << self
-      attr_accessor :chosen_tags, :run_all_if_no_match, :log_if_no_match
+      attr_accessor :run_all_if_no_match, :log_if_no_match
 
       alias :run_all_if_no_match? :run_all_if_no_match
       alias :log_if_no_match? :log_if_no_match
@@ -222,6 +222,10 @@ module Minitest
         @chosen_tags = tags.map(&:to_s)
         @run_all_if_no_match = run_all_if_no_match
         @log_if_no_match = log_if_no_match
+      end
+
+      def chosen_tags
+        @chosen_tags || []
       end
 
       def positive_tags
